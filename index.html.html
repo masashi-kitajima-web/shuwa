@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手話イラスト検索</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+:root {
+  --ink:     #1a2e1a;
+  --forest:  #2d5a3d;
+  --leaf:    #4a9060;
+  --mint:    #7cc49a;
+  --pale:    #e8f5ed;
+  --cream:   #f5faf6;
+  --white:   #ffffff;
+  --amber:   #e8a020;
+  --red:     #c0392b;
+  --shadow:  0 2px 16px rgba(26,46,26,0.10);
+  --r:       14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── ヘッダー ── */
+header {
+  background: var(--forest);
+  padding: 28px 24px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg, transparent, transparent 20px,
+    rgba(255,255,255,0.03) 20px, rgba(255,255,255,0.03) 40px
+  );
+  pointer-events: none;
+}
+header h1 {
+  color: white;
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  position: relative;
+  z-index: 1;
+}
+header h1 span { color: var(--mint); }
+header p {
+  color: rgba(255,255,255,0.72);
+  font-size: 0.82rem;
+  margin-top: 5px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── メインレイアウト ── */
+.wrap { max-width: 820px; margin: 0 auto; padding: 28px 18px 80px; }
+
+/* ── セットアップバナー ── */
+.setup-banner {
+  background: linear-gradient(135deg, #fffbf0, #fff8e1);
+  border: 1.5px solid #f0c040;
+  border-radius: var(--r);
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: #5a3e00;
+}
+.setup-banner strong { color: #c07800; }
+.setup-banner.hidden { display: none; }
+
+/* ── GAS URL 設定 ── */
+.gas-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 22px;
+}
+.gas-input {
+  flex: 1;
+  border: 2px solid #c5dfc9;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  background: white;
+  color: var(--ink);
+  transition: border-color .2s;
+}
+.gas-input:focus { outline: none; border-color: var(--leaf); }
+.gas-btn {
+  background: var(--forest);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.gas-btn:hover { background: var(--leaf); }
+
+/* ── ステータスバー ── */
+.status-bar {
+  display: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+.status-bar.loading { background: #e8f5ed; color: var(--forest); display: flex; align-items: center; gap: 10px; }
+.status-bar.ok      { background: #d4edda; color: #155724; display: block; }
+.status-bar.error   { background: #fde8e8; color: #922;    display: block; }
+
+/* ── 検索ボックス ── */
+.search-wrap {
+  background: white;
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  margin-bottom: 26px;
+  border: 1px solid #daeee0;
+}
+.search-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mint);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.search-row { display: flex; gap: 10px; }
+.search-input {
+  flex: 1;
+  border: 2px solid #c5dfc9;
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--cream);
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--leaf);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(74,144,96,.13);
+}
+.search-btn {
+  background: linear-gradient(135deg, var(--forest), var(--leaf));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 22px;
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(45,90,61,.22);
+  transition: transform .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+.search-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(45,90,61,.3); }
+.search-btn:active { transform: none; }
+.search-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+/* ── ローディング スピナー ── */
+.spinner {
+  width: 18px; height: 18px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-top-color: var(--leaf);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 結果ヘッダー ── */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.result-meta { display: flex; align-items: center; gap: 10px; }
+.result-title { font-weight: 900; font-size: 1rem; color: var(--forest); }
+.result-count {
+  background: var(--pale);
+  color: var(--forest);
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 20px;
+}
+.dl-btn {
+  background: white;
+  color: var(--forest);
+  border: 2px solid var(--leaf);
+  border-radius: 9px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s, color .15s;
+}
+.dl-btn:hover { background: var(--forest); color: white; }
+.dl-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── カードグリッド ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid #daeee0;
+  box-shadow: 0 2px 8px rgba(26,46,26,.07);
+  animation: up .28s ease both;
+  transition: transform .18s, box-shadow .18s;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 7px 22px rgba(26,46,26,.13); }
+@keyframes up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: contain;
+  background: var(--cream);
+  display: block;
+}
+.card-body { padding: 9px 10px 11px; text-align: center; }
+.card-word { font-size: .86rem; font-weight: 700; color: var(--forest); }
+.card-file { font-size: .68rem; color: var(--mint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+.badge-exact { background: #d4edda; color: #155724; }
+.badge-fuzzy { background: #fff3cd; color: #856404; }
+
+/* ── 見つからなかったワード ── */
+.not-found {
+  margin-top: 20px;
+  background: #fff8f0;
+  border: 1px solid #f0c090;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: .84rem;
+  color: #7c4700;
+}
+.not-found strong { display: block; margin-bottom: 4px; }
+
+/* ── レスポンシブ ── */
+@media (max-width: 500px) {
+  .search-row { flex-direction: column; }
+  .search-btn { width: 100%; }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .gas-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤟 手話<span>イラスト</span>検索</h1>
+  <p>日本語を入力すると対応する手話イラストを表示します</p>
+</header>
+
+<div class="wrap">
+
+  <!-- セットアップ案内（初回のみ） -->
+  <div class="setup-banner" id="setupBanner">
+    ⚙️ <strong>初回設定：</strong>下のテキストボックスに <strong>GAS の Web アプリ URL</strong> を貼り付けて「読み込む」を押してください。<br>
+    設定方法は配布の手順書を参照してください。
+  </div>
+
+  <!-- GAS URL 入力 -->
+  <div class="gas-row">
+    <input class="gas-input" type="text" id="gasUrl"
+      placeholder="https://script.google.com/macros/s/〇〇〇/exec">
+    <button class="gas-btn" onclick="loadFromGAS()">📂 読み込む</button>
+  </div>
+
+  <!-- ステータスバー -->
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- 検索 -->
+  <div class="search-wrap">
+    <span class="search-label">🔍 調べたい日本語を入力（スペース区切りで複数可）</span>
+    <div class="search-row">
+      <input class="search-input" type="text" id="searchInput"
+        placeholder="例：明後日　魚　贈る">
+      <button class="search-btn" id="searchBtn" onclick="doSearch()">検索</button>
+    </div>
+  </div>
+
+  <!-- 結果エリア -->
+  <div id="resultArea" style="display:none">
+    <div class="result-header">
+      <div class="result-meta">
+        <span class="result-title">検索結果</span>
+        <span class="result-count" id="resultCount">0件</span>
+      </div>
+      <button class="dl-btn" id="dlBtn" onclick="downloadAll()">
+        ⬇️ まとめてダウンロード
+      </button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="not-found" id="notFound" style="display:none"></div>
+  </div>
+
+</div>
+
+<!-- JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ============================================================
+//  状態
+// ============================================================
+let db = [];          // [{filename, fileId, keywords}]
+let lastResults = []; // 最後の検索結果
+
+// ============================================================
+//  起動時：保存済みGAS URLがあれば自動ロード
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('shuwa_gas_url') || '';
+  if (saved) {
+    document.getElementById('gasUrl').value = saved;
+    document.getElementById('setupBanner').classList.add('hidden');
+    await loadFromGAS(true);
+  }
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+});
+
+// ============================================================
+//  GAS からファイル一覧を取得
+//  GASが返すJSON形式: { files: [{name, id}, ...] }
+// ============================================================
+async function loadFromGAS(silent = false) {
+  const url = document.getElementById('gasUrl').value.trim();
+  if (!url) { showStatus('error', '⚠️ GAS の URL を入力してください'); return; }
+
+  showStatus('loading', '画像一覧を読み込み中...');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
+    if (!json.files || !Array.isArray(json.files)) {
+      throw new Error('GASの返すJSONに "files" 配列がありません');
+    }
+
+    db = json.files.map(f => ({
+      filename: f.name,
+      fileId:   f.id,
+      // 表示用サムネイル（CORS回避）
+      thumbUrl: `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`,
+      // ダウンロード用
+      dlUrl:    `https://drive.google.com/uc?export=download&id=${f.id}`,
+      // ファイル名からキーワード抽出（拡張子除去→アンダースコア分割）
+      keywords: f.name.replace(/\.[^.]+$/, '')
+                      .split('_')
+                      .filter(k => k && !/^\d+$/.test(k))
+    }));
+
+    localStorage.setItem('shuwa_gas_url', url);
+    document.getElementById('setupBanner').classList.add('hidden');
+    showStatus('ok', `✅ ${db.length} 件の手話イラストを読み込みました`);
+    setTimeout(() => hideStatus(), 3000);
+  } catch(e) {
+    showStatus('error', `❌ 読み込みエラー：${e.message}`);
+    console.error(e);
+  }
+}
+
+// ============================================================
+//  キーワードマッチング（APIキー不要・ローカル処理）
+//  完全一致 → 前方一致 → 部分一致 の優先順で検索
+// ============================================================
+function matchWord(word) {
+  const w = word.trim();
+  if (!w) return null;
+  const wLower = w.toLowerCase();
+
+  // 1. 完全一致
+  let hit = db.find(f => f.keywords.some(k => k === w || k.toLowerCase() === wLower));
+  if (hit) return { ...hit, word: w, confidence: 'exact' };
+
+  // 2. 前方一致（例：「あさって」で「あさっての」を含むファイルに対応）
+  hit = db.find(f => f.keywords.some(k => k.startsWith(w) || w.startsWith(k)));
+  if (hit) return { ...hit, word: w, confidence: 'fuzzy' };
+
+  // 3. 部分一致
+  hit = db.find(f => f.keywords.some(k =>
+    k.toLowerCase().includes(wLower) || wLower.includes(k.toLowerCase())
+  ));
+  if (hit) return { ...hit, word: w, confidence: 'fuzzy' };
+
+  return { word: w, confidence: 'none' };
+}
+
+// ============================================================
+//  検索実行
+// ============================================================
+function doSearch() {
+  const input = document.getElementById('searchInput').value.trim();
+  if (!input) return;
+  if (db.length === 0) {
+    showStatus('error', '⚠️ 先にGASのURLを入力して「読み込む」を押してください');
+    return;
+  }
+
+  // 助詞・助動詞リスト（簡易）
+  const stopWords = new Set(['を','が','は','に','で','の','と','も','から','まで','へ',
+                              'て','な','だ','です','ます','した','する','ない','ある']);
+
+  const words = input
+    .split(/[\s　、。・,，]+/)
+    .filter(w => w.length > 0 && !stopWords.has(w));
+
+  const found   = [];
+  const missing = [];
+
+  for (const w of words) {
+    const result = matchWord(w);
+    if (result.confidence !== 'none') found.push(result);
+    else missing.push(w);
+  }
+
+  lastResults = found;
+  renderResults(found, missing);
+}
+
+// ============================================================
+//  結果描画
+// ============================================================
+function renderResults(found, missing) {
+  const area  = document.getElementById('resultArea');
+  const grid  = document.getElementById('grid');
+  const count = document.getElementById('resultCount');
+  const nf    = document.getElementById('notFound');
+
+  grid.innerHTML = '';
+  count.textContent = found.length + '件';
+  area.style.display = 'block';
+
+  found.forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = (i * 0.055) + 's';
+
+    const badgeClass = r.confidence === 'exact' ? 'badge-exact' : 'badge-fuzzy';
+    const badgeLabel = r.confidence === 'exact' ? '完全一致' : '部分一致';
+
+    card.innerHTML = `
+      <img src="${r.thumbUrl}"
+           alt="${r.word}"
+           loading="lazy"
+           onerror="this.style.background='#e8f5ed';this.alt='画像を読み込めませんでした'">
+      <div class="card-body">
+        <div class="card-word">${r.word}</div>
+        <div class="card-file">${r.filename.replace(/\.[^.]+$/, '')}</div>
+        <span class="badge ${badgeClass}">${badgeLabel}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  if (missing.length > 0) {
+    nf.style.display = 'block';
+    nf.innerHTML = `<strong>⚠️ 該当する手話が見つかりませんでした：</strong>${missing.join('　')}`;
+  } else {
+    nf.style.display = 'none';
+  }
+}
+
+// ============================================================
+//  まとめてダウンロード（ZIP）
+// ============================================================
+async function downloadAll() {
+  if (lastResults.length === 0) return;
+  const btn = document.getElementById('dlBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 準備中...';
+
+  try {
+    const zip    = new JSZip();
+    const folder = zip.folder('手話イラスト');
+    let   ok     = 0;
+
+    for (const r of lastResults) {
+      try {
+        const res  = await fetch(r.dlUrl);
+        const blob = await res.blob();
+        folder.file(r.filename, blob);
+        ok++;
+      } catch(e) {
+        console.warn('DL失敗:', r.filename);
+      }
+    }
+
+    if (ok === 0) throw new Error('画像をダウンロードできませんでした（Drive の共有設定を確認してください）');
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = '手話イラスト.zip';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch(e) {
+    showStatus('error', '❌ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇️ まとめてダウンロード';
+  }
+}
+
+// ============================================================
+//  UI ヘルパー
+// ============================================================
+function showStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  bar.className = 'status-bar ' + type;
+  if (type === 'loading') {
+    bar.innerHTML = `<div class="spinner"></div><span>${msg}</span>`;
+  } else {
+    bar.textContent = msg;
+  }
+}
+function hideStatus() {
+  document.getElementById('statusBar').className = 'status-bar';
+}
+</script>
+</body>
+</html>
